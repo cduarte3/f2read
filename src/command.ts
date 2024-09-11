@@ -13,10 +13,10 @@ const openai = new OpenAI({
 });
 
 let instructions = "";
+let writtenFile = "README.md";
+let userModel = "gemma2:2b";
 
 // Feature 1, allow user to specify baseURL and API key
-
-// Feature 2, allow user to specify a custom filename instead of default README.md
 
 yargs(hideBin(process.argv))
   .version("0.1")
@@ -48,38 +48,62 @@ yargs(hideBin(process.argv))
         }
       }
       const finalInfo =
-        "Explain the following text, explain what each file does, files are separated by the fileName with -------- underneath. Respond only in Markdown (.md) file formatted language.\n\n" +
+        `Respond only in Markdown (.md) file formatted language, using proper #, ## header types, list types, other proper formatting, etc.\n
+        Make sure your response is proper markdown syntax, with no errors.\n
+        Examine the following text, figure out what each file specified does.\n
+        Give a file name a # header with a ### header description underneath explaining what the file is and could possibly be used for.\n
+        Then provide sections underneath the description explaining each function in the code as a numbered list of items.\n\n
+        Code for each file is as follows:\n\n` +
         instructions;
       const completion = await openai.chat.completions.create({
-        model: "llama2",
+        model: userModel,
         messages: [{ role: "user", content: finalInfo }],
       });
       //console.log(finalInfo);
       //console.log(completion.choices[0].message.content);
       const mdContent = completion.choices[0].message.content;
-      if (mdContent) {
-        await writeMarkdown(mdContent);
+      if (mdContent) {1
+        await writeMarkdown(mdContent, writtenFile);
       }
     }
   )
+  // Feature 2, allow user to specify a custom filename instead of default README.md
+  .option("output", {
+    alias: "o",
+    description: "Specify a custom output file name instead of README.md",
+    type: "string",
+    coerce: (arg) => {
+      writtenFile = arg;
+      return arg;
+    },
+  })
+  .option("model", {
+    alias: "m",
+    description: "Specify the model to use for the AI prompt",
+    type: "string",
+    coerce: (arg) => {
+      userModel = arg;
+      return arg;
+    },
+  })
   .parse();
 
-async function textContent(fileName: string, shortName: string) {
+async function textContent(tempName: string, shortName: string) {
   try {
     console.log(`Reading file: ${shortName}`);
-    const data = await readFile(fileName, "utf8");
-    instructions += shortName + "\n--------\n\n" + data + "\n\n";
+    const data = await readFile(tempName, "utf8");
+    instructions += shortName + "\n\n" + data + "\n\n";
   } catch (err) {
     console.error("Error reading file:", err);
   }
 }
 
-async function writeMarkdown(data: string) {
+async function writeMarkdown(data: string, tempFile: string) {
   try {
-    console.log(`Writing file: README.md`);
-    const path = join(process.cwd(), "src", "README.md");
+    console.log(`Writing file: ${tempFile}`);
+    const path = join(process.cwd(), "src", tempFile);
     await writeFile(path, data);
-    console.log(`File written: README.md`);
+    console.log(`File written: ${tempFile}`);
   } catch (err) {
     console.error("Error writing file:", err);
   }
