@@ -3,7 +3,7 @@
 
 <br>
 
-![alt text](images\render.gif)
+![alt text](https://github.com/cduarte3/f2read/tree/main/images/render.gif)
 
 <br>
 
