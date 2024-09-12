@@ -3,7 +3,7 @@
 
 <br>
 
-![alt text](https://github.com/cduarte3/f2read/tree/main/images/render.gif)
+![alt text](https://github.com/cduarte3/f2read/blob/main/images/render.gif?raw=true)
 
 <br>
 
@@ -13,24 +13,29 @@
 ## Steps
 
 1. **Install the Ollama environment.**<br>
-    - This can be done by visiting https://ollama.com and following the download instructions. <br><br> ![alt text](images\image.png)
+    - This can be done by visiting https://ollama.com and following the download instructions. <br><br> ![alt text](https://github.com/cduarte3/f2read/blob/main/images/image.png?raw=true)
 
 <br><br>
 
 2. **Select the model of your choosing.**<br>
-    - Visit the models tab, or https://ollama.com/library, and choose a model that works for you. By default this tool uses Gemma2, you may choose that if you so wish. <br><br> ![alt text](images\image-1.png)
+    - Visit the models tab, or https://ollama.com/library, and choose a model that works for you. By default this tool uses Gemma2, you may choose that if you so wish. <br><br> ![alt text](https://github.com/cduarte3/f2read/blob/main/images/image-1.png?raw=true)
 
 <br><br>
 
 3. **Use the run command to start the model.**<br>
-    - Open up a cmd prompt window and use the run command for the model of your choice. <br><br> **Example for Gemma2:** <br><br> ![alt text](images\image-3.png) <br><br> **Usage:** <br><br> ![alt text](images\image-4.png)
+    - Open up a cmd prompt window and use the run command for the model of your choice. <br><br> **Example for Gemma2:** <br><br> ![alt text](https://github.com/cduarte3/f2read/blob/main/images/image-3.png?raw=true) <br><br> **Usage:** <br><br> ![alt text](https://github.com/cduarte3/f2read/blob/main/images/image-4.png?raw=true)
 
 <br><br>
 
-4. **Good to go.**<br>
+4. **Pull the repo and get files ready.**<br>
+    - Once Ollama model is set up, clone or fork the repo and place any of your files inside the 'src' folder. 
+
+<br><br>
+
+5. **Good to go.**<br>
     - Once these steps have been completed and the model is running, you may run the command line interface tool. The commands and usage guide will be listed below.
 
-    - To check if your Ollama model is running, type the command ```ollama ps```. <br><br>**Example of usage:** <br><br>![alt text](images\image-5.png)
+    - To check if your Ollama model is running, type the command ```ollama ps```. <br><br>**Example of usage:** <br><br>![alt text](https://github.com/cduarte3/f2read/blob/main/images/image-5.png?raw=true)
 
 <br><br>
 
@@ -66,5 +71,5 @@
 <br>
 
 ## Example
-- ```bun f2 new-read ../src/main.py```
-> <br>Produces a readMe.md file explaining the contents of main.py from the src folder<br><br>
+- ```bun f2 new-read main.py```
+> <br>Produces a README.md file explaining the contents of main.py from the src folder<br><br>
