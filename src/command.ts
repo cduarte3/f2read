@@ -60,10 +60,10 @@ yargs(hideBin(process.argv))
         messages: [{ role: "user", content: finalInfo }],
       });
       //console.log(finalInfo);
-      //console.log(completion.choices[0].message.content);
       const mdContent = completion.choices[0].message.content;
       if (mdContent) {1
         await writeMarkdown(mdContent, writtenFile);
+        //console.log(`\n\n Contents of ${writtenFile}:\n\n ${mdContent} \n\n`)
       }
     }
   )
