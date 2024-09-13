@@ -39,6 +39,17 @@ yargs(hideBin(process.argv))
       }),
     async (argv) => {
       const files = Array.isArray(argv.fl) ? argv.fl : [argv.fl];
+      console.log(`
+        8888888888 .d8888b.  8888888b.                        888 
+        888       d88P  Y88b 888   Y88b                       888 
+        888              888 888    888                       888 
+        8888888        .d88P 888   d88P .d88b.   8888b.   .d88888 
+        888        .od888P"  8888888P" d8P  Y8b     "88b d88" 888 
+        888       d88P"      888 T88b  88888888 .d888888 888  888 
+        888       888"       888  T88b Y8b.     888  888 Y88b 888 
+        888       888888888  888   T88b "Y8888  "Y888888  "Y88888 
+                                                                                                                                
+        `);
       for (const fileName of files) {
         const filePath = join(process.cwd(), "src", fileName);
         if (existsSync(filePath)) {
@@ -53,17 +64,17 @@ yargs(hideBin(process.argv))
         Examine the following text, figure out what each file specified does.\n
         Give a file name a # header with a ### header description underneath explaining what the file is and could possibly be used for.\n
         Then provide sections underneath the description explaining each function in the code as a numbered list of items.\n\n
-        Code for each file is as follows:\n\n` +
-        instructions;
+        Code for each file is as follows:\n\n` + instructions;
       const completion = await openai.chat.completions.create({
         model: userModel,
         messages: [{ role: "user", content: finalInfo }],
       });
       //console.log(finalInfo);
       const mdContent = completion.choices[0].message.content;
-      if (mdContent) {1
+      if (mdContent) {
+        1;
         await writeMarkdown(mdContent, writtenFile);
-        //console.log(`\n\n Contents of ${writtenFile}:\n\n ${mdContent} \n\n`)
+        console.log(`\n\n Contents of ${writtenFile}:\n\n ${mdContent} \n\n`)
       }
     }
   )
