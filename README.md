@@ -28,8 +28,8 @@
 <br><br>
 
 4. **Pull the repo and get files ready.**<br>
-    - Once Ollama model is set up, clone or fork the repo and place any of your files inside the 'src' folder. 
-
+    - Once Ollama model is set up, clone or fork the repo and place any of your files inside the src folder or in the root folder (file names will need to be called with a prefix of ./ if placed in the root)
+.
 <br><br>
 
 5. **Good to go.**<br>
@@ -47,6 +47,7 @@
 ### new-read <fl...>
 - ```bun f2 new-read fileName```
 > <br>Running new-read with a following path to a file name will pass in the file and use the tool.<br><br>
+**NOTE: If you are passing in a file, for example main.py, the tool will assume it is inside the src folder. Typing a file path such as ./src/main.py also works, or you can type a path to a different folder. If filename has no path, program will check in src folder by default.**<br><br>
 
 ### --output filePath OR --o filePath
 - ```bun f2 new-read fileName --output filePath.md```

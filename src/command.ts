@@ -1,34 +1,23 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-//import usage from "./usage";
 import OpenAI from "openai";
 import { readFile } from "fs/promises";
-import { existsSync } from "fs";
-import { join } from "path";
-import { writeFile } from "fs/promises";
+import { join, resolve } from "path";
+import { writeFile, access } from "fs/promises";
 
 const openai = new OpenAI({
   baseURL: "http://localhost:11434/v1",
-  apiKey: "ollama", // required but unused
+  apiKey: "ollama", // Required for connection but unused
 });
 
 let instructions = "";
 let writtenFile = "README.md";
 let userModel = "gemma2:2b";
 
-// Feature 1, allow user to specify baseURL and API key
-
 yargs(hideBin(process.argv))
   .version("0.1")
   .alias("version", "v")
-  //.help(true)
   .alias("help", "h")
-  /*.command(
-    "help",
-    "Display Usage and help information for the CLI tool",
-    () => {},
-    () => usage()
-  ) */
   .command(
     "new-read <fl...>",
     "Creates a new readMe file based on the argument(s) / file path(s) passed",
@@ -51,11 +40,11 @@ yargs(hideBin(process.argv))
                                                                                                                                 
         `);
       for (const fileName of files) {
-        const filePath = join(process.cwd(), "src", fileName);
-        if (existsSync(filePath)) {
+        const filePath = await checkFilePath(fileName);
+        if (filePath) {
           await textContent(filePath, fileName);
         } else {
-          console.error(`File not found: ${filePath}`);
+          console.error(`File not found: ${fileName}`);
           process.exit(1);
         }
       }
@@ -70,16 +59,14 @@ yargs(hideBin(process.argv))
         model: userModel,
         messages: [{ role: "user", content: finalInfo }],
       });
-      //console.log(finalInfo);
       const mdContent = completion.choices[0].message.content;
       if (mdContent) {
         1;
         await writeMarkdown(mdContent, writtenFile);
-        console.log(`\n\n Contents of ${writtenFile}:\n\n ${mdContent} \n\n`)
+        console.log(`\n\n Contents of ${writtenFile}:\n\n ${mdContent} \n\n`);
       }
     }
   )
-  // Feature 2, allow user to specify a custom filename instead of default README.md
   .option("output", {
     alias: "o",
     description: "Specify a custom output file name instead of README.md",
@@ -100,6 +87,7 @@ yargs(hideBin(process.argv))
   })
   .parse();
 
+// Function to allow reading from the files passed as arguments
 async function textContent(tempName: string, shortName: string) {
   try {
     console.log(`Reading file: ${shortName}`);
@@ -111,6 +99,7 @@ async function textContent(tempName: string, shortName: string) {
   }
 }
 
+// Function to allow writing to the file with the data of the prompt response
 async function writeMarkdown(data: string, tempFile: string) {
   try {
     console.log(`Writing file: ${tempFile}`);
@@ -120,5 +109,22 @@ async function writeMarkdown(data: string, tempFile: string) {
   } catch (err) {
     console.error("Error writing file:", err);
     process.exit(1);
+  }
+}
+
+// Function to check if the file path exists or if file is in src folder
+async function checkFilePath(filePath: string) {
+  if (!filePath.includes("/")) {
+    const fullPath = join(process.cwd(), "src", filePath);
+    return fullPath;
+  } else {
+    const fullPath = resolve(filePath);
+    try {
+      await access(fullPath);
+      return fullPath;
+    } catch (err) {
+      console.error(`File not found: ${fullPath}`);
+      return null;
+    }
   }
 }
