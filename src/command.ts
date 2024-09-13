@@ -19,7 +19,7 @@ yargs(hideBin(process.argv))
   .alias("version", "v")
   .alias("help", "h")
   .command(
-    "new-read <fl...>",
+    "$0 <fl...>",
     "Creates a new readMe file based on the argument(s) / file path(s) passed",
     (yargs) =>
       yargs.positional("fl", {
