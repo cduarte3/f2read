@@ -56,6 +56,7 @@ yargs(hideBin(process.argv))
           await textContent(filePath, fileName);
         } else {
           console.error(`File not found: ${filePath}`);
+          process.exit(1);
         }
       }
       const finalInfo =
@@ -106,6 +107,7 @@ async function textContent(tempName: string, shortName: string) {
     instructions += shortName + "\n\n" + data + "\n\n";
   } catch (err) {
     console.error("Error reading file:", err);
+    process.exit(1);
   }
 }
 
@@ -117,5 +119,6 @@ async function writeMarkdown(data: string, tempFile: string) {
     console.log(`File written: ${tempFile}`);
   } catch (err) {
     console.error("Error writing file:", err);
+    process.exit(1);
   }
 }
