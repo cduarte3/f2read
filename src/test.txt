@@ -1,0 +1,10 @@
+async function getContents(filePaths) {
+  const readPromises = filePaths.map(async (filePath) => {
+    try {
+      const content = await readFile(filePath, 'utf-8');
+      return content;
+    } catch (err) {
+      console.error(`Error reading file ${filePath}: ${err.message}`);
+      return null;  // Return null if reading file fails
+    }
+  });
