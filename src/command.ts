@@ -67,7 +67,13 @@ yargs(hideBin(process.argv))
       }
 
       if (argv.tokenUsage) {
-        console.error(completion.usage);
+        const { prompt_tokens, completion_tokens, total_tokens } = completion.usage!;
+        console.error(
+          "Token Usage:", 
+          "\nPrompt Tokens:", prompt_tokens, 
+          "\nCompletion Tokens:", completion_tokens, 
+          "\nTotal tokens:", total_tokens
+        );
       }
     }
   )
