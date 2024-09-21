@@ -1,5 +1,5 @@
 # F2Read / Usage
-**This command line interface tool will help you to read 1 or multiple files and convert the contents into a readMe.md file explaining your code.**
+**This command line interface tool will help you to read 1 or multiple files and convert the contents into a READMe.md file explaining your code.**
 
 <br>
 
