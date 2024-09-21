@@ -10,7 +10,7 @@
     "typescript": "^5.0.0"
   },
   "scripts": {
-    "f3": "bun run ./index.ts"
+    "f2": "bun run ./index.ts"
   },
   "dependencies": {
     "openai": "^4.59.0",
