@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import { readFile } from "fs/promises";
 import { join, resolve } from "path";
 import { writeFile, access } from "fs/promises";
+import { promises as fs} from "fs";
 
 const openai = new OpenAI({
   baseURL: "http://localhost:11434/v1",
@@ -41,12 +42,24 @@ yargs(hideBin(process.argv))
         `);
 
       for (const fileName of files) {
-        const filePath = await checkFilePath(fileName);
-        if (filePath) {
-          await textContent(filePath, fileName);
-        } else {
-          console.error(`File not found: ${fileName}`);
-          process.exit(1);
+        const result = await checkFilePath(fileName);
+        if (result) {
+          const { path, type } = result;
+          if (type === 1) { // type 1 is a folder or directory
+            console.log("Opening folder:", fileName);
+            const filesInFolder = await fs.readdir(path);
+            for (const file of filesInFolder) {
+              const fullPath = join(path, file);
+              await textContent(fullPath, file);
+            }
+          }
+          else if (type === 0) { // type 0 is a file name
+            await textContent(path, fileName);
+          }
+          else{
+            console.error(`File or directory not found: ${fileName}`);
+            process.exit(1);
+          }
         }
       }
       const finalInfo =
@@ -130,14 +143,27 @@ async function writeMarkdown(data: string, tempFile: string) {
 
 // Function to check if the file path exists or if file is in src folder
 async function checkFilePath(filePath: string) {
-  if (!filePath.includes("/")) {
-    const fullPath = join(process.cwd(), "src", filePath);
-    return fullPath;
+  if (!filePath.includes("src")) {
+    let fullPath = join(process.cwd(), "src", filePath);
+    if(!fullPath.includes(".")) {
+      const stat = await fs.stat(fullPath);
+      if (stat.isDirectory()) {
+        return { path: fullPath, type: 1 };
+      } else {
+        console.error(`Folder in src not found: ${filePath}`);
+        return null;
+      }
+    }
+    return { path: fullPath, type: 0 };
   } else {
     const fullPath = resolve(filePath);
+    const stat = await fs.stat(fullPath);
+    if (stat.isDirectory()) {
+      return { path: fullPath, type: 1 };
+    }
     try {
       await access(fullPath);
-      return fullPath;
+      return { path: fullPath, type: 0 };
     } catch (err) {
       console.error(`File not found: ${fullPath}`);
       return null;
