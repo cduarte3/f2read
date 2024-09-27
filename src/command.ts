@@ -69,14 +69,35 @@ yargs(hideBin(process.argv))
         Give a file name a # header with a ### header description underneath explaining what the file is and could possibly be used for.\n
         Then provide sections underneath the description explaining each function in the code as a numbered list of items.\n\n
         Code for each file is as follows:\n\n` + instructions;
-      const completion = await openai.chat.completions.create({
-        model: userModel,
-        messages: [{ role: "user", content: finalInfo }],
-      });
-      const mdContent = completion.choices[0].message.content;
-      if (mdContent) {
-        await writeMarkdown(mdContent, writtenFile);
-        console.log(`\n\n Contents of ${writtenFile}:\n\n ${mdContent} \n\n`);
+      let completion: any;
+
+      if(argv.stream) {
+        let mdContent = "";
+        completion = await openai.chat.completions.create({
+          model: userModel,
+          messages: [{ role: "user", content: finalInfo }],
+          stream: true,
+        });
+        console.log("Output to be written to:", writtenFile, "\n");
+        for await (const chunk of completion){
+          const content = chunk.choices[0]?.delta?.content || "";
+          process.stdout.write(content);
+          mdContent += content;
+        }
+        if (mdContent != "") {
+          await writeMarkdown(mdContent, writtenFile);
+        }
+      }
+      else{
+        completion = await openai.chat.completions.create({
+          model: userModel,
+          messages: [{ role: "user", content: finalInfo }],
+        });
+        const mdContent = completion.choices[0].message.content;
+        if (mdContent) {
+          await writeMarkdown(mdContent, writtenFile);
+          console.log(`\n\n Contents of ${writtenFile}:\n\n ${mdContent} \n\n`);
+        }
       }
 
       if (argv.tokenUsage) {
@@ -112,6 +133,12 @@ yargs(hideBin(process.argv))
     alias: "t",
     default: false,
     description: "Returns information about the number of tokens",
+    type: "boolean",
+  })
+  .option("stream", {
+    alias: "s",
+    default: false,
+    description: "Streams output to console as it is generated",
     type: "boolean",
   })
   .parse();
