@@ -39,6 +39,7 @@ yargs(hideBin(process.argv))
         888       888888888  888   T88b "Y8888  "Y888888  "Y88888 
                                                                                                                                 
         `);
+
       for (const fileName of files) {
         const filePath = await checkFilePath(fileName);
         if (filePath) {
@@ -61,9 +62,18 @@ yargs(hideBin(process.argv))
       });
       const mdContent = completion.choices[0].message.content;
       if (mdContent) {
-        1;
         await writeMarkdown(mdContent, writtenFile);
         console.log(`\n\n Contents of ${writtenFile}:\n\n ${mdContent} \n\n`);
+      }
+
+      if (argv.tokenUsage) {
+        const { prompt_tokens, completion_tokens, total_tokens } = completion.usage!;
+        console.error(
+          "Token Usage:", 
+          "\nPrompt Tokens:", prompt_tokens, 
+          "\nCompletion Tokens:", completion_tokens, 
+          "\nTotal tokens:", total_tokens
+        );
       }
     }
   )
@@ -84,6 +94,12 @@ yargs(hideBin(process.argv))
       userModel = arg;
       return arg;
     },
+  })
+  .option("token-usage", {
+    alias: "t",
+    default: false,
+    description: "Returns information about the number of tokens",
+    type: "boolean",
   })
   .parse();
 
