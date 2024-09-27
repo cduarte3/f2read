@@ -4,7 +4,7 @@ import OpenAI from "openai";
 import { readFile } from "fs/promises";
 import { join, resolve } from "path";
 import { writeFile, access } from "fs/promises";
-import { promises as fs} from "fs";
+import { promises as fs } from "fs";
 
 const openai = new OpenAI({
   baseURL: "http://localhost:11434/v1",
@@ -52,11 +52,12 @@ yargs(hideBin(process.argv))
               const fullPath = join(path, file);
               await textContent(fullPath, file);
             }
+            console.log("Done searching:", fileName);
           }
           else if (type === 0) { // type 0 is a file name
             await textContent(path, fileName);
           }
-          else{
+          else {
             console.error(`File or directory not found: ${fileName}`);
             process.exit(1);
           }
@@ -71,7 +72,7 @@ yargs(hideBin(process.argv))
         Code for each file is as follows:\n\n` + instructions;
       let completion: any;
 
-      if(argv.stream) {
+      if (argv.stream) {
         let mdContent = "";
         completion = await openai.chat.completions.create({
           model: userModel,
@@ -79,7 +80,7 @@ yargs(hideBin(process.argv))
           stream: true,
         });
         console.log("Output to be written to:", writtenFile, "\n");
-        for await (const chunk of completion){
+        for await (const chunk of completion) {
           const content = chunk.choices[0]?.delta?.content || "";
           process.stdout.write(content);
           mdContent += content;
@@ -88,7 +89,7 @@ yargs(hideBin(process.argv))
           await writeMarkdown(mdContent, writtenFile);
         }
       }
-      else{
+      else {
         completion = await openai.chat.completions.create({
           model: userModel,
           messages: [{ role: "user", content: finalInfo }],
@@ -103,9 +104,9 @@ yargs(hideBin(process.argv))
       if (argv.tokenUsage) {
         const { prompt_tokens, completion_tokens, total_tokens } = completion.usage!;
         console.error(
-          "Token Usage:", 
-          "\nPrompt Tokens:", prompt_tokens, 
-          "\nCompletion Tokens:", completion_tokens, 
+          "Token Usage:",
+          "\nPrompt Tokens:", prompt_tokens,
+          "\nCompletion Tokens:", completion_tokens,
           "\nTotal tokens:", total_tokens
         );
       }
@@ -172,7 +173,7 @@ async function writeMarkdown(data: string, tempFile: string) {
 async function checkFilePath(filePath: string) {
   if (!filePath.includes("src")) {
     let fullPath = join(process.cwd(), "src", filePath);
-    if(!fullPath.includes(".")) {
+    if (!fullPath.includes(".")) {
       const stat = await fs.stat(fullPath);
       if (stat.isDirectory()) {
         return { path: fullPath, type: 1 };
