@@ -74,3 +74,22 @@
 ## Example
 - ```bun f2 new-read main.py```
 > <br>Produces a README.md file explaining the contents of main.py from the src folder<br><br>
+
+# Config
+
+If you would like to have your commands loaded automatically through a configuration file, follow these steps:
+
+1. ## Create a configuration file
+
+Go to your home directory and create a new file in there called F2READ-config.toml. Format it something like this:
+
+```
+model = "llama3.2"
+output = "IloveTOML"
+tokenUsage = true
+stream = true
+```
+
+2. ## Enjoy
+
+The program should take these values from your configuration file and use them. This way you don't have to type them on the command line each time.

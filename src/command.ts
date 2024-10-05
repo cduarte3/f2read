@@ -5,6 +5,7 @@ import { readFile } from "fs/promises";
 import { join, resolve } from "path";
 import { writeFile, access } from "fs/promises";
 import { promises as fs } from "fs";
+import toml from "toml";
 
 const openai = new OpenAI({
   baseURL: "http://localhost:11434/v1",
@@ -14,22 +15,49 @@ const openai = new OpenAI({
 let instructions = "";
 let writtenFile = "README.md";
 let userModel = "gemma2:2b";
+const defaultConfigFile = join(process.cwd(), "F2READ-config.toml");
+let configOptions: any = {};
 
-yargs(hideBin(process.argv))
-  .version("0.1")
-  .alias("version", "v")
-  .alias("help", "h")
-  .command(
-    "$0 <fl...>",
-    "Creates a new readMe file based on the argument(s) / file path(s) passed",
-    (yargs) =>
-      yargs.positional("fl", {
-        description: "The path name(s) of the file(s) to be read",
-        type: "string",
-      }),
-    async (argv) => {
-      const files = Array.isArray(argv.fl) ? argv.fl : [argv.fl];
-      console.log(`
+//Function to load the TOML configuration file
+async function loadConfigFile() {
+  try {
+    const tomlData = await readFile(defaultConfigFile, "utf-8");
+    configOptions = toml.parse(tomlData);
+    console.log(`Configuration loaded from ${defaultConfigFile}`);
+  } catch (err) {
+    console.warn(`No configuration file found at ${defaultConfigFile}. Continuing with default options.`);
+  }
+}
+
+async function init() {
+  await loadConfigFile();
+
+  yargs(hideBin(process.argv))
+    .version("0.1")
+    .alias("version", "v")
+    .alias("help", "h")
+    .command(
+      "$0 <fl...>",
+      "Creates a new readMe file based on the argument(s) / file path(s) passed",
+      (yargs) =>
+        yargs.positional("fl", {
+          description: "The path name(s) of the file(s) to be read",
+          type: "string",
+        }),
+      async (argv) => {
+        //Merge command-line arguments with TOML config options
+        const options = {
+          model: argv.model || configOptions.model || "gemma2:2b",
+          output: argv.output || configOptions.output || "README.md",
+          stream: argv.stream || configOptions.stream || false,
+          tokenUsage: argv.tokenUsage || configOptions.tokenUsage || false,
+        };
+
+        writtenFile = options.output;
+        userModel = options.model;
+
+        const files = Array.isArray(argv.fl) ? argv.fl : [argv.fl];
+        console.log(`
         8888888888 .d8888b.  8888888b.                        888 
         888       d88P  Y88b 888   Y88b                       888 
         888              888 888    888                       888 
@@ -38,111 +66,113 @@ yargs(hideBin(process.argv))
         888       d88P"      888 T88b  88888888 .d888888 888  888 
         888       888"       888  T88b Y8b.     888  888 Y88b 888 
         888       888888888  888   T88b "Y8888  "Y888888  "Y88888 
-                                                                                                                                
         `);
 
-      for (const fileName of files) {
-        const result = await checkFilePath(fileName);
-        if (result) {
-          const { path, type } = result;
-          if (type === 1) { // type 1 is a folder or directory
-            console.log("Opening folder:", fileName);
-            const filesInFolder = await fs.readdir(path);
-            for (const file of filesInFolder) {
-              const fullPath = join(path, file);
-              await textContent(fullPath, file);
+        for (const fileName of files) {
+          const result = await checkFilePath(fileName);
+          if (result) {
+            const { path, type } = result;
+            if (type === 1) { // Folder or directory
+              console.log("Opening folder:", fileName);
+              const filesInFolder = await fs.readdir(path);
+              for (const file of filesInFolder) {
+                const fullPath = join(path, file);
+                await textContent(fullPath, file);
+              }
+              console.log("Done searching:", fileName);
+            } else if (type === 0) { // File name
+              await textContent(path, fileName);
+            } else {
+              console.error(`File or directory not found: ${fileName}`);
+              process.exit(1);
             }
-            console.log("Done searching:", fileName);
-          }
-          else if (type === 0) { // type 0 is a file name
-            await textContent(path, fileName);
-          }
-          else {
-            console.error(`File or directory not found: ${fileName}`);
-            process.exit(1);
           }
         }
-      }
-      const finalInfo =
-        `Respond only in Markdown (.md) file formatted language, using proper #, ## header types, list types, other proper formatting, etc.\n
-        Make sure your response is proper markdown syntax, with no errors.\n
-        Examine the following text, figure out what each file specified does.\n
-        Give a file name a # header with a ### header description underneath explaining what the file is and could possibly be used for.\n
-        Then provide sections underneath the description explaining each function in the code as a numbered list of items.\n\n
-        Code for each file is as follows:\n\n` + instructions;
-      let completion: any;
+        
+        const finalInfo =
+          `Respond only in Markdown (.md) file formatted language, using proper #, ## header types, list types, other proper formatting, etc.\n
+          Make sure your response is proper markdown syntax, with no errors.\n
+          Examine the following text, figure out what each file specified does.\n
+          Give a file name a # header with a ### header description underneath explaining what the file is and could possibly be used for.\n
+          Then provide sections underneath the description explaining each function in the code as a numbered list of items.\n\n
+          Code for each file is as follows:\n\n` + instructions;
+        
+        let completion: any;
 
-      if (argv.stream) {
-        let mdContent = "";
-        completion = await openai.chat.completions.create({
-          model: userModel,
-          messages: [{ role: "user", content: finalInfo }],
-          stream: true,
-        });
-        console.log("Output to be written to:", writtenFile, "\n");
-        for await (const chunk of completion) {
-          const content = chunk.choices[0]?.delta?.content || "";
-          process.stdout.write(content);
-          mdContent += content;
+        if (options.stream) {
+          let mdContent = "";
+          completion = await openai.chat.completions.create({
+            model: userModel,
+            messages: [{ role: "user", content: finalInfo }],
+            stream: true,
+          });
+          console.log("Output to be written to:", writtenFile, "\n");
+          for await (const chunk of completion) {
+            const content = chunk.choices[0]?.delta?.content || "";
+            process.stdout.write(content);
+            mdContent += content;
+          }
+          if (mdContent != "") {
+            await writeMarkdown(mdContent, writtenFile);
+          }
+        } else {
+          completion = await openai.chat.completions.create({
+            model: userModel,
+            messages: [{ role: "user", content: finalInfo }],
+          });
+          const mdContent = completion.choices[0].message.content;
+          if (mdContent) {
+            await writeMarkdown(mdContent, writtenFile);
+            console.log(`\n\nContents of ${writtenFile}:\n\n${mdContent}\n\n`);
+          }
         }
-        if (mdContent != "") {
-          await writeMarkdown(mdContent, writtenFile);
-        }
-      }
-      else {
-        completion = await openai.chat.completions.create({
-          model: userModel,
-          messages: [{ role: "user", content: finalInfo }],
-        });
-        const mdContent = completion.choices[0].message.content;
-        if (mdContent) {
-          await writeMarkdown(mdContent, writtenFile);
-          console.log(`\n\n Contents of ${writtenFile}:\n\n ${mdContent} \n\n`);
-        }
-      }
 
-      if (argv.tokenUsage) {
-        const { prompt_tokens, completion_tokens, total_tokens } = completion.usage!;
-        console.error(
-          "Token Usage:",
-          "\nPrompt Tokens:", prompt_tokens,
-          "\nCompletion Tokens:", completion_tokens,
-          "\nTotal tokens:", total_tokens
-        );
+        if (options.tokenUsage) {
+          const { prompt_tokens, completion_tokens, total_tokens } = completion.usage!;
+          console.error(
+            "Token Usage:",
+            "\nPrompt Tokens:", prompt_tokens,
+            "\nCompletion Tokens:", completion_tokens,
+            "\nTotal tokens:", total_tokens
+          );
+        }
       }
-    }
-  )
-  .option("output", {
-    alias: "o",
-    description: "Specify a custom output file name instead of README.md",
-    type: "string",
-    coerce: (arg) => {
-      writtenFile = arg;
-      return arg;
-    },
-  })
-  .option("model", {
-    alias: "m",
-    description: "Specify the model to use for the AI prompt",
-    type: "string",
-    coerce: (arg) => {
-      userModel = arg;
-      return arg;
-    },
-  })
-  .option("token-usage", {
-    alias: "t",
-    default: false,
-    description: "Returns information about the number of tokens",
-    type: "boolean",
-  })
-  .option("stream", {
-    alias: "s",
-    default: false,
-    description: "Streams output to console as it is generated",
-    type: "boolean",
-  })
-  .parse();
+    )
+    .option("output", {
+      alias: "o",
+      description: "Specify a custom output file name instead of README.md",
+      type: "string",
+      coerce: (arg) => {
+        writtenFile = arg;
+        return arg;
+      },
+    })
+    .option("model", {
+      alias: "m",
+      description: "Specify the model to use for the AI prompt",
+      type: "string",
+      coerce: (arg) => {
+        userModel = arg;
+        return arg;
+      },
+    })
+    .option("token-usage", {
+      alias: "t",
+      default: false,
+      description: "Returns information about the number of tokens",
+      type: "boolean",
+    })
+    .option("stream", {
+      alias: "s",
+      default: false,
+      description: "Streams output to console as it is generated",
+      type: "boolean",
+    })
+    .parse();
+}
+
+// Call the initialization function
+init();
 
 // Function to allow reading from the files passed as arguments
 async function textContent(tempName: string, shortName: string) {
