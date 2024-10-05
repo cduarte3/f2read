@@ -6,7 +6,6 @@ import { join, resolve } from "path";
 import { writeFile, access } from "fs/promises";
 import { promises as fs } from "fs";
 import toml from "toml";
-import {homedir} from "os";
 
 const openai = new OpenAI({
   baseURL: "http://localhost:11434/v1",
@@ -16,7 +15,7 @@ const openai = new OpenAI({
 let instructions = "";
 let writtenFile = "README.md";
 let userModel = "gemma2:2b";
-const defaultConfigFile = join(homedir(), "F2READ-config.toml");
+const defaultConfigFile = join(process.cwd(), "F2READ-config.toml");
 let configOptions: any = {};
 
 //Function to load the TOML configuration file
