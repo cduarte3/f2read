@@ -12,25 +12,56 @@ const openai = new OpenAI({
   apiKey: "ollama", // Required for connection but unused
 });
 
-let instructions = "";
-let writtenFile = "README.md";
-let userModel = "gemma2:2b";
-const defaultConfigFile = join(process.cwd(), "F2READ-config.toml");
-let configOptions: any = {};
-
 //Function to load the TOML configuration file
-async function loadConfigFile() {
+async function loadConfigFile(filePath: string) {
   try {
-    const tomlData = await readFile(defaultConfigFile, "utf-8");
-    configOptions = toml.parse(tomlData);
-    console.log(`Configuration loaded from ${defaultConfigFile}`);
+    const tomlData = await readFile(filePath, "utf-8");
+    const configOptions = toml.parse(tomlData);
+    console.log(`Configuration loaded from ${filePath}`);
+    return configOptions;
   } catch (err) {
-    console.warn(`No configuration file found at ${defaultConfigFile}. Continuing with default options.`);
+    console.warn(`No configuration file found at ${filePath}. Continuing with default options.`);
+    return {};  
   }
 }
 
+async function generateContent(filePaths: string[]) {
+  let instructions = "";
+
+  for (const fileName of filePaths) {
+    const fileCheck = await checkFilePath(fileName);
+    if (fileCheck) {
+      const { path, type } = fileCheck;
+      if (type === 1) { // Folder or directory
+        console.log("Opening folder:", fileName);
+        const filesInFolder = await fs.readdir(path);
+        for (const file of filesInFolder) {
+          const fullPath = join(path, file);
+          instructions += await readFileContent(fullPath, file);
+        }
+        console.log("Done searching:", fileName);
+      } else if (type === 0) { // File name
+        instructions += await readFileContent(path, fileName);
+      } else {
+        console.error(`File or directory not found: ${fileName}`);
+        process.exit(1);
+      }
+    }
+  }
+  
+  const finalPrompt =
+    `Respond only in Markdown (.md) file formatted language, using proper #, ## header types, list types, other proper formatting, etc.\n
+    Make sure your response is proper markdown syntax, with no errors.\n
+    Examine the following text, figure out what each file specified does. There is a chance the files may be unrelated.\n
+    Give each code section specified by file name a # header with a ### header description underneath explaining what the file is and could possibly be used for.\n
+    Then provide sections underneath the description explaining each function in the code as a numbered list of items.\n\n
+    Code for each file is as follows:\n\n` + instructions;
+  return finalPrompt;
+}
+
 async function init() {
-  await loadConfigFile();
+  const defaultConfigFilePath = join(process.cwd(), "F2READ-config.toml");
+  const configOptions = await loadConfigFile(defaultConfigFilePath);
 
   yargs(hideBin(process.argv))
     .version("0.1")
@@ -53,10 +84,13 @@ async function init() {
           tokenUsage: argv.tokenUsage || configOptions.tokenUsage || false,
         };
 
-        writtenFile = options.output;
-        userModel = options.model;
+        const writtenFile = options.output;
+        const userModel = options.model;
 
-        const files = Array.isArray(argv.fl) ? argv.fl : [argv.fl];
+        const files = (Array.isArray(argv.fl) ? argv.fl : [argv.fl]).filter(
+          (file): file is string => typeof file === "string"
+        );
+      
         console.log(`
         8888888888 .d8888b.  8888888b.                        888 
         888       d88P  Y88b 888   Y88b                       888 
@@ -68,46 +102,19 @@ async function init() {
         888       888888888  888   T88b "Y8888  "Y888888  "Y88888 
         `);
 
-        for (const fileName of files) {
-          const result = await checkFilePath(fileName);
-          if (result) {
-            const { path, type } = result;
-            if (type === 1) { // Folder or directory
-              console.log("Opening folder:", fileName);
-              const filesInFolder = await fs.readdir(path);
-              for (const file of filesInFolder) {
-                const fullPath = join(path, file);
-                await textContent(fullPath, file);
-              }
-              console.log("Done searching:", fileName);
-            } else if (type === 0) { // File name
-              await textContent(path, fileName);
-            } else {
-              console.error(`File or directory not found: ${fileName}`);
-              process.exit(1);
-            }
-          }
-        }
+        const AI_prompt = await generateContent(files);
         
-        const finalInfo =
-          `Respond only in Markdown (.md) file formatted language, using proper #, ## header types, list types, other proper formatting, etc.\n
-          Make sure your response is proper markdown syntax, with no errors.\n
-          Examine the following text, figure out what each file specified does.\n
-          Give a file name a # header with a ### header description underneath explaining what the file is and could possibly be used for.\n
-          Then provide sections underneath the description explaining each function in the code as a numbered list of items.\n\n
-          Code for each file is as follows:\n\n` + instructions;
-        
-        let completion: any;
+        let AI_response: any;
 
         if (options.stream) {
           let mdContent = "";
-          completion = await openai.chat.completions.create({
+          AI_response = await openai.chat.completions.create({
             model: userModel,
-            messages: [{ role: "user", content: finalInfo }],
+            messages: [{ role: "user", content: AI_prompt }],
             stream: true,
           });
           console.log("Output to be written to:", writtenFile, "\n");
-          for await (const chunk of completion) {
+          for await (const chunk of AI_response) {
             const content = chunk.choices[0]?.delta?.content || "";
             process.stdout.write(content);
             mdContent += content;
@@ -116,11 +123,11 @@ async function init() {
             await writeMarkdown(mdContent, writtenFile);
           }
         } else {
-          completion = await openai.chat.completions.create({
+          AI_response = await openai.chat.completions.create({
             model: userModel,
-            messages: [{ role: "user", content: finalInfo }],
+            messages: [{ role: "user", content: AI_prompt }],
           });
-          const mdContent = completion.choices[0].message.content;
+          const mdContent = AI_response.choices[0].message.content;
           if (mdContent) {
             await writeMarkdown(mdContent, writtenFile);
             console.log(`\n\nContents of ${writtenFile}:\n\n${mdContent}\n\n`);
@@ -128,7 +135,7 @@ async function init() {
         }
 
         if (options.tokenUsage) {
-          const { prompt_tokens, completion_tokens, total_tokens } = completion.usage!;
+          const { prompt_tokens, completion_tokens, total_tokens } = AI_response.usage!;
           console.error(
             "Token Usage:",
             "\nPrompt Tokens:", prompt_tokens,
@@ -143,7 +150,6 @@ async function init() {
       description: "Specify a custom output file name instead of README.md",
       type: "string",
       coerce: (arg) => {
-        writtenFile = arg;
         return arg;
       },
     })
@@ -152,7 +158,6 @@ async function init() {
       description: "Specify the model to use for the AI prompt",
       type: "string",
       coerce: (arg) => {
-        userModel = arg;
         return arg;
       },
     })
@@ -171,15 +176,13 @@ async function init() {
     .parse();
 }
 
-// Call the initialization function
-init();
-
 // Function to allow reading from the files passed as arguments
-async function textContent(tempName: string, shortName: string) {
+async function readFileContent(tempName: string, shortName: string) {
   try {
     console.log(`Reading file: ${shortName}`);
     const data = await readFile(tempName, "utf8");
-    instructions += shortName + "\n\n" + data + "\n\n";
+    const formattedCode = "File: " + shortName + "\n\n" + data + "\n\n";
+    return formattedCode;
   } catch (err) {
     console.error("Error reading file:", err);
     process.exit(1);
@@ -228,3 +231,6 @@ async function checkFilePath(filePath: string) {
     }
   }
 }
+
+// Call the initialization function
+init();
