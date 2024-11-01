@@ -3,18 +3,31 @@
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
+    "@eslint/js": "^9.14.0",
     "@types/bun": "latest",
-    "@types/yargs": "^17.0.33"
+    "@types/yargs": "^17.0.33",
+    "eslint": "^9.14.0",
+    "globals": "^15.11.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "typescript-eslint": "^8.12.2"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "scripts": {
-    "f2": "bun run ./index.ts"
+    "f2": "bun run ./index.ts",
+    "lint": "eslint src/*.ts",
+    "format": "prettier --write .",
+    "prepare": "husky"
   },
   "dependencies": {
     "openai": "^4.59.0",
+    "prettier": "3.3.3",
     "toml": "^3.0.0",
     "yargs": "^17.7.2"
+  },
+  "lint-staged": {
+    "**/*.{ts,js}": ["eslint --fix", "prettier --write --ignore-unknown"]
   }
 }

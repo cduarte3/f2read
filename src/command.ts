@@ -19,9 +19,12 @@ async function loadConfigFile(filePath: string) {
     const configOptions = toml.parse(tomlData);
     console.log(`Configuration loaded from ${filePath}`);
     return configOptions;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    console.warn(`No configuration file found at ${filePath}. Continuing with default options.`);
-    return {};  
+    console.warn(
+      `No configuration file found at ${filePath}. Continuing with default options.`,
+    );
+    return {};
   }
 }
 
@@ -32,7 +35,8 @@ async function generateContent(filePaths: string[]) {
     const fileCheck = await checkFilePath(fileName);
     if (fileCheck) {
       const { path, type } = fileCheck;
-      if (type === 1) { // Folder or directory
+      if (type === 1) {
+        // Folder or directory
         console.log("Opening folder:", fileName);
         const filesInFolder = await fs.readdir(path);
         for (const file of filesInFolder) {
@@ -40,7 +44,8 @@ async function generateContent(filePaths: string[]) {
           instructions += await readFileContent(fullPath, file);
         }
         console.log("Done searching:", fileName);
-      } else if (type === 0) { // File name
+      } else if (type === 0) {
+        // File name
         instructions += await readFileContent(path, fileName);
       } else {
         console.error(`File or directory not found: ${fileName}`);
@@ -48,7 +53,7 @@ async function generateContent(filePaths: string[]) {
       }
     }
   }
-  
+
   const finalPrompt =
     `Respond only in Markdown (.md) file formatted language, using proper #, ## header types, list types, other proper formatting, etc.\n
     Make sure your response is proper markdown syntax, with no errors.\n
@@ -88,9 +93,9 @@ async function init() {
         const userModel = options.model;
 
         const files = (Array.isArray(argv.fl) ? argv.fl : [argv.fl]).filter(
-          (file): file is string => typeof file === "string"
+          (file): file is string => typeof file === "string",
         );
-      
+
         console.log(`
         8888888888 .d8888b.  8888888b.                        888 
         888       d88P  Y88b 888   Y88b                       888 
@@ -103,7 +108,8 @@ async function init() {
         `);
 
         const AI_prompt = await generateContent(files);
-        
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let AI_response: any;
 
         if (options.stream) {
@@ -135,15 +141,19 @@ async function init() {
         }
 
         if (options.tokenUsage) {
-          const { prompt_tokens, completion_tokens, total_tokens } = AI_response.usage!;
+          const { prompt_tokens, completion_tokens, total_tokens } =
+            AI_response.usage!;
           console.error(
             "Token Usage:",
-            "\nPrompt Tokens:", prompt_tokens,
-            "\nCompletion Tokens:", completion_tokens,
-            "\nTotal tokens:", total_tokens
+            "\nPrompt Tokens:",
+            prompt_tokens,
+            "\nCompletion Tokens:",
+            completion_tokens,
+            "\nTotal tokens:",
+            total_tokens,
           );
         }
-      }
+      },
     )
     .option("output", {
       alias: "o",
@@ -205,7 +215,7 @@ async function writeMarkdown(data: string, tempFile: string) {
 // Function to check if the file path exists or if file is in src folder
 async function checkFilePath(filePath: string) {
   if (!filePath.includes("src")) {
-    let fullPath = join(process.cwd(), "src", filePath);
+    const fullPath = join(process.cwd(), "src", filePath);
     if (!fullPath.includes(".")) {
       const stat = await fs.stat(fullPath);
       if (stat.isDirectory()) {
@@ -225,6 +235,7 @@ async function checkFilePath(filePath: string) {
     try {
       await access(fullPath);
       return { path: fullPath, type: 0 };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       console.error(`File not found: ${fullPath}`);
       return null;
