@@ -1,0 +1,20 @@
+# Ignore artifacts:
+build
+coverage
+
+# Ignore directories:
+node_modules
+images
+src/examples
+
+
+# Ignore documentation:
+README.md
+CONTRIBUTING.md
+LICENSE
+
+# Ignore configuration files:
+package.json
+package-lock.json
+tsconfig.json
+bun.lockb
