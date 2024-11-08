@@ -44,17 +44,22 @@
 
 ## CLI Tool
 
-### new-read <fl...>
-- ```bun f2 new-read fileName```
-> <br>Running new-read with a following path to a file name will pass in the file and use the tool.<br><br>
-**NOTE: If you are passing in a file, for example main.py, the tool will assume it is inside the src folder. Typing a file path such as ./src/main.py also works, or you can type a path to a different folder. If filename has no path, program will check in src folder by default.**<br><br>
+### f2 <fl...>
+- ```bun f2 fileName```
+> <br>Running f2 with a following path to a file name will pass in the file and use the tool.<br><br>
+**NOTE: If you are passing in a file, for example main.py, the tool will assume it is inside the src folder. Typing a dir name before the filename will also work, for example: 'examples/sample.py' which exists at 'f2read/src/examples/sample.py'. If filename has no path, program will check in src folder by default.**<br><br>
+
+### f2 <dir...>
+- ```bun f2 dirName```
+> <br>Running f2 with a directory name will pass in the directory and read all its files.<br><br>
+**NOTE: If you are passing in a directory, for example 'examples/', the tool will assume it is inside the src folder. Any dir name outside of src will not work, the program will check in src folder by default.**<br><br>
 
 ### --output filePath OR --o filePath
-- ```bun f2 new-read fileName --output filePath.md```
+- ```bun f2 fileName --output filePath.md```
 > <br>Adding the --output or --o tag as an option in the CLI call will allow for renaming of the output markdown file to the specified filename. File must be specified with .md<br><br> If README.md is not an issue for a file name, DO NOT include this tag<br><br>
 
 ### --model modelName OR --m modelName
-- ```bun f2 new-read fileName --model llama2```
+- ```bun f2 fileName --model llama2```
 > <br>Adding the --model or --m tag as an option in the CLI call will allow for specifying the model to be used for the prompt. Model must be a valid Ollama model to work.<br><br> If Gemma2 / Gemma2:2b is not an issue for a prompt model, DO NOT include this tag<br><br>
 
 <br>
@@ -71,25 +76,37 @@
 
 <br>
 
-## Example
-- ```bun f2 new-read main.py```
+## Example 1
+- ```bun f2 main.py```
 > <br>Produces a README.md file explaining the contents of main.py from the src folder<br><br>
+
+## Example 2
+- ```bun f2 examples/sample.py```
+> <br>Produces a README.md file explaining the contents of sample.py from the src/exmples/ folder<br><br>
+
+## Example 3
+- ```bun f2 examples/```
+> <br>Produces a README.md file explaining the contents of each file found inside of the src/examples/ folder<br><br>
+
+<br>
 
 # Config
 
 If you would like to have your commands loaded automatically through a configuration file, follow these steps:
 
-1. ## Create a configuration file
+ ## 1. Create a configuration file
 
 Go to your home directory and create a new file in there called F2READ-config.toml. Format it something like this:
 
 ```
 model = "llama3.2"
-output = "IloveTOML"
-tokenUsage = true
+output = "NAME.md"
+tokenUsage = false
 stream = true
 ```
 
-2. ## Enjoy
+It can contain variables of only the above: model, output, tokenUsage, and stream. They can be written in any order.
+
+## 2. Enjoy
 
 The program should take these values from your configuration file and use them. This way you don't have to type them on the command line each time.

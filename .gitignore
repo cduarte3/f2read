@@ -177,3 +177,6 @@ dist
 # Config file
 
 .F2READ-config.toml
+
+# test created files
+src/TEST.md

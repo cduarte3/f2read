@@ -13,28 +13,32 @@ const openai = new OpenAI({
 });
 
 //Function to load the TOML configuration file
-async function loadConfigFile(filePath: string) {
+export async function loadConfigFile(filePath: string) {
   try {
     const tomlData = await readFile(filePath, "utf-8");
     const configOptions = toml.parse(tomlData);
     console.log(`Configuration loaded from ${filePath}`);
     return configOptions;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
-    console.warn(
-      `No configuration file found at ${filePath}. Continuing with default options.`,
-    );
-    return {};
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+      console.warn(
+        `No configuration file found at ${filePath}. Continuing with default options.`,
+      );
+      return {};
+    } else {
+      throw err;
+    }
   }
 }
 
-async function generateContent(filePaths: string[]) {
+export async function generateContent(filePaths: string[]) {
   let instructions = "";
 
   for (const fileName of filePaths) {
     const fileCheck = await checkFilePath(fileName);
     if (fileCheck) {
       const { path, type } = fileCheck;
+
       if (type === 1) {
         // Folder or directory
         console.log("Opening folder:", fileName);
@@ -64,11 +68,11 @@ async function generateContent(filePaths: string[]) {
   return finalPrompt;
 }
 
-async function init() {
+export async function init() {
   const defaultConfigFilePath = join(process.cwd(), "F2READ-config.toml");
   const configOptions = await loadConfigFile(defaultConfigFilePath);
 
-  yargs(hideBin(process.argv))
+  await yargs(hideBin(process.argv))
     .version("0.1")
     .alias("version", "v")
     .alias("help", "h")
@@ -81,7 +85,7 @@ async function init() {
           type: "string",
         }),
       async (argv) => {
-        //Merge command-line arguments with TOML config options
+        // Merge command-line arguments with TOML config options
         const options = {
           model: argv.model || configOptions.model || "gemma2:2b",
           output: argv.output || configOptions.output || "README.md",
@@ -119,6 +123,7 @@ async function init() {
             messages: [{ role: "user", content: AI_prompt }],
             stream: true,
           });
+          console.log(AI_response);
           console.log("Output to be written to:", writtenFile, "\n");
           for await (const chunk of AI_response) {
             const content = chunk.choices[0]?.delta?.content || "";
@@ -133,6 +138,7 @@ async function init() {
             model: userModel,
             messages: [{ role: "user", content: AI_prompt }],
           });
+          console.log("AI_response:", AI_response);
           const mdContent = AI_response.choices[0].message.content;
           if (mdContent) {
             await writeMarkdown(mdContent, writtenFile);
@@ -187,20 +193,20 @@ async function init() {
 }
 
 // Function to allow reading from the files passed as arguments
-async function readFileContent(tempName: string, shortName: string) {
+export async function readFileContent(fullPath: string, shortName: string) {
   try {
     console.log(`Reading file: ${shortName}`);
-    const data = await readFile(tempName, "utf8");
+    const data = await readFile(fullPath, "utf8");
     const formattedCode = "File: " + shortName + "\n\n" + data + "\n\n";
     return formattedCode;
   } catch (err) {
-    console.error("Error reading file:", err);
+    console.error("Error reading file: " + shortName + "\nError:" + err);
     process.exit(1);
   }
 }
 
 // Function to allow writing to the file with the data of the prompt response
-async function writeMarkdown(data: string, tempFile: string) {
+export async function writeMarkdown(data: string, tempFile: string) {
   try {
     console.log(`Writing file: ${tempFile}`);
     const path = join(process.cwd(), "src", tempFile);
@@ -213,19 +219,25 @@ async function writeMarkdown(data: string, tempFile: string) {
 }
 
 // Function to check if the file path exists or if file is in src folder
-async function checkFilePath(filePath: string) {
+export async function checkFilePath(filePath: string) {
   if (!filePath.includes("src")) {
     const fullPath = join(process.cwd(), "src", filePath);
     if (!fullPath.includes(".")) {
-      const stat = await fs.stat(fullPath);
-      if (stat.isDirectory()) {
+      try {
+        await fs.stat(fullPath);
         return { path: fullPath, type: 1 };
-      } else {
-        console.error(`Folder in src not found: ${filePath}`);
-        return null;
+      } catch (err) {
+        console.error(`Folder in src not found: ${filePath}\n Error: ${err}`);
+        return { path: "invalid", type: -1 };
       }
     }
-    return { path: fullPath, type: 0 };
+    try {
+      await access(fullPath);
+      return { path: fullPath, type: 0 };
+    } catch (err) {
+      console.error(`File not found: ${fullPath}\nError: ${err}`);
+      return { path: "invalid", type: -1 };
+    }
   } else {
     const fullPath = resolve(filePath);
     const stat = await fs.stat(fullPath);
@@ -235,13 +247,13 @@ async function checkFilePath(filePath: string) {
     try {
       await access(fullPath);
       return { path: fullPath, type: 0 };
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
-      console.error(`File not found: ${fullPath}`);
-      return null;
+      console.error(`File not found: ${fullPath}\nError: ${err}`);
+      return { path: "invalid", type: -1 };
     }
   }
 }
 
-// Call the initialization function
-init();
+if (process.env.NODE_ENV !== "test") {
+  init();
+}
