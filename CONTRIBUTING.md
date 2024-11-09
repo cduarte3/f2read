@@ -137,3 +137,79 @@ Step 2:
 Step 3:
 - Add the below
 - ![lint settings code](https://github.com/cduarte3/f2read/blob/main/images/lint.png?raw=true)
+
+
+## Running the test suite
+
+This tool uses JEST tests for testing, with Nock for mocking the AI instance. In order to test the tool, you must run the following commands:
+
+(for all dependencies)
+</br>```bun install``` 
+### OR
+(if you need individual modules)
+</br>```bun add jest```
+</br>```bun add nock``` 
+
+Then, you may run the test suite with:
+</br>```bun run test```
+
+Which is defined in the package.json scripts:
+</br>```"test": "jest --coverage"```
+
+Running this command will display the test cases passed, the number of tests passed, as well as the coverage the tests are able to cover in the program.
+
+
+## Auto running the suite with save
+
+If you wish to run the test suite after saving the test file, you will need to install the Jest extension.
+
+Information to the extension can be found here:
+
+Name: Jest</br>
+Id: Orta.vscode-jest</br>
+Description: Use Facebook's Jest With Pleasure.</br>
+Version: 6.4.0</br>
+Publisher: Orta</br>
+VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=Orta.vscode-jest
+
+
+This extension allows for running of the test suite automatically on save, as well as providing a better interface for running the test suite.
+
+## Running single tests
+
+ In order to run single line tests, you must add the JEST extension listed above. Once the extension is added, open it and you can click the play button beside any of the tests in the suite to run them individually.
+
+
+## Creating tests
+
+When creating tests in the suite, make sure to not override any previous tests, unless the functions themselves have been changed in any way. In that case, update the test cases to reflect changes.
+
+### Format
+
+For the format of the test cases, functions can have their own sections listed in the header of the 'describe' and any tests cases regarding that function can be included with 'test' inside the described function. 
+
+Here is an example of a test case for function writeMarkdown():
+
+```
+describe("File content writing with writeMarkdown()", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  afterEach(async () => {
+    // Clean up the generated README.md file after each test
+    try {
+      await unlink("./src/TEST.md");
+      // eslint-disable-next-line
+    } catch (err) {
+      // File might not exist, ignore the error
+    }
+  });
+  test("writeMarkdown should write content to file", async () => {
+    const file = "TEST.md";
+    const content = "This is a test README file.";
+    await writeMarkdown(content, file);
+    const data = await readFile("./src/TEST.md", "utf8");
+    expect(data).toContain(content);
+  });
+});
+```
