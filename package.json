@@ -23,7 +23,8 @@
     "lint": "eslint src/*.ts",
     "format": "prettier --write .",
     "prepare": "husky",
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "jest": "jest"
   },
   "dependencies": {
     "nock": "^13.5.5",
