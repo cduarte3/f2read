@@ -24,7 +24,7 @@ describe("TOML file reading with loadConfigFile()", () => {
   });
   test("loadConfigFile should load TOML variables of model, output, stream, token-usage", async () => {
     const configOptions = await loadConfigFile(
-      "./test-files/toml/.F2Read-test.toml",
+      join(process.cwd(), "test-files/toml/.F2Read-test.toml"),
     );
     expect(configOptions).toBeDefined();
     expect(configOptions).toHaveProperty("model");

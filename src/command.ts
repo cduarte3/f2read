@@ -123,7 +123,6 @@ export async function init() {
             messages: [{ role: "user", content: AI_prompt }],
             stream: true,
           });
-          console.log(AI_response);
           console.log("Output to be written to:", writtenFile, "\n");
           for await (const chunk of AI_response) {
             const content = chunk.choices[0]?.delta?.content || "";
@@ -138,7 +137,6 @@ export async function init() {
             model: userModel,
             messages: [{ role: "user", content: AI_prompt }],
           });
-          console.log("AI_response:", AI_response);
           const mdContent = AI_response.choices[0].message.content;
           if (mdContent) {
             await writeMarkdown(mdContent, writtenFile);
