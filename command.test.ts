@@ -17,15 +17,33 @@ import {
 import { readFile, unlink } from "fs/promises";
 import { join } from "path";
 import nock from "nock";
+import { promises as fs } from "fs";
 
 describe("TOML file reading with loadConfigFile()", () => {
   beforeEach(() => {
+    jest.resetModules(); // Clear any previous mocks
+    jest.doMock("fs/promises", () => ({
+      readFile: jest.fn(),
+      unlink: jest.fn(),
+    }));
     jest.clearAllMocks();
   });
+
   test("loadConfigFile should load TOML variables of model, output, stream, token-usage", async () => {
+    const tomlFilePath = join(process.cwd(), ".F2Read-test.toml");
+    const tomlContent = `
+      model = "gemma2:2b"
+      output = "README.md"
+      stream = true
+      tokenUsage = true
+    `;
+    await fs.writeFile(tomlFilePath, tomlContent);
+
     const configOptions = await loadConfigFile(
-      join(process.cwd(), "test-files/toml/.F2Read-test.toml"),
+      join(process.cwd(), ".F2Read-test.toml"),
     );
+    console.log("Config options:", configOptions); // Debug log
+
     expect(configOptions).toBeDefined();
     expect(configOptions).toHaveProperty("model");
     expect(configOptions.model).toBe("gemma2:2b");
@@ -35,28 +53,42 @@ describe("TOML file reading with loadConfigFile()", () => {
     expect(configOptions.stream).toBe(true);
     expect(configOptions).toHaveProperty("tokenUsage");
     expect(configOptions.tokenUsage).toBe(true);
+
+    try {
+      await fs.unlink(tomlFilePath);
+    } catch (err) {
+      console.warn("Could not delete test TOML file:", err);
+    }
   });
 
   test("loadConfigFile should return default options if file does not exist", async () => {
+    const { readFile } = await import("fs/promises");
     const consoleWarnSpy = jest
       .spyOn(console, "warn")
       .mockImplementation(() => {});
 
+    // Mock the readFile function to throw an ENOENT error
+    (readFile as jest.Mock).mockRejectedValue({ code: "ENOENT" });
+
     const configOptions = await loadConfigFile(
-      "./test-files/toml/notReal.toml",
+      join(process.cwd(), "test-files/toml/notReal.toml"),
     );
 
     expect(configOptions).toEqual({});
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      `No configuration file found at ./test-files/toml/notReal.toml. Continuing with default options.`,
+      `No configuration file found at ${join(process.cwd(), "test-files/toml/notReal.toml")}. Continuing with default options.`,
     );
 
     consoleWarnSpy.mockRestore();
   });
 
   test("loadConfigFile should handle empty TOML file", async () => {
+    const { readFile } = await import("fs/promises");
+    // Mock the readFile function to return an empty string
+    (readFile as jest.Mock).mockResolvedValue("");
+
     const configOptions = await loadConfigFile(
-      "./test-files/toml/.F2Read-empty.toml",
+      join(process.cwd(), "test-files/toml/.F2Read-empty.toml"),
     );
     expect(configOptions).toEqual({});
   });
