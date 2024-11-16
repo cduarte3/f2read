@@ -1,4 +1,0 @@
-model = "gemma2:2b"
-output = "README.md"
-stream = true
-tokenUsage = true
