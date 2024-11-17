@@ -92,6 +92,12 @@ describe("TOML file reading with loadConfigFile()", () => {
     );
     expect(configOptions).toEqual({});
   });
+
+  test("loadConfigFile should handle empty string", async () => {
+    const configOptions = await loadConfigFile("");
+    console.log(configOptions);
+    expect(configOptions).toEqual({});
+  });
 });
 
 describe("File content reading with readFileContent()", () => {
