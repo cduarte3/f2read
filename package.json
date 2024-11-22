@@ -1,6 +1,6 @@
 {
   "name": "f2read",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A CLI tool for generating code into README.md",
   "main": "dist/index.js",
   "bin": {
@@ -14,7 +14,7 @@
     "prepare": "husky install",
     "test": "jest --coverage",
     "prepublishOnly": "npm run build",
-    "f2": "bun run ./index.ts"
+    "f2": "bun run ./src/index.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",

@@ -252,6 +252,8 @@ export async function checkFilePath(filePath: string) {
   }
 }
 
+/*
 if (process.env.NODE_ENV !== "test") {
   init();
 }
+*/
