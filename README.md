@@ -15,46 +15,58 @@
 
 ## Steps
 
-1. **Install the Ollama environment.**<br>
+1. **Install Bun.**<br>
+    - This can be done by visiting https://bun.sh and following the download instructions. <br><br> ![alt text]![image](https://github.com/user-attachments/assets/8c5001b7-8705-43a4-8db2-6f00c8126cad)
+
+
+<br><br>
+
+2. **Install the Ollama environment.**<br>
     - This can be done by visiting https://ollama.com and following the download instructions. <br><br> ![alt text](https://github.com/cduarte3/f2read/blob/main/images/image.png?raw=true)
 
 <br><br>
 
-2. **Select the model of your choosing.**<br>
+3. **Select the model of your choosing.**<br>
     - Visit the models tab, or https://ollama.com/library, and choose a model that works for you. By default this tool uses Gemma2, you may choose that if you so wish.
        - If you would like to use a different installed model, view the config setup at the end of this README for more info. <br><br> ![alt text](https://github.com/cduarte3/f2read/blob/main/images/image-1.png?raw=true)
 
 <br><br>
 
-3. **Run the Ollama application**<br>
+4. **Run the Ollama application**<br>
     - Open your start menu or find the Ollama application in your system, and run it. Nothing will happen, but the app will run in the background. <br><br> ![image](https://github.com/user-attachments/assets/3480fb22-6ebe-4b62-b02b-4b61f889cdd4)
 
 
 <br><br>
 
-4. **Use the run command to start the model. (After Ollama app has been opened)**<br>
-    - Open up a cmd prompt window and use the run command for the model of your choice. <br><br> **Example for Gemma2:** <br><br> ![alt text](https://github.com/cduarte3/f2read/blob/main/images/image-3.png?raw=true) <br><br> **Usage:** <br><br> ![alt text](https://github.com/cduarte3/f2read/blob/main/images/image-4.png?raw=true)
+5. **Run the model in a CMD or Powershell Window (After Ollama app has been opened)**<br>
+    - Open up a cmd prompt or Powershell window.
+    -  Use the run command for the model of your choice. <br><br> **Example for Gemma2:** <br><br> ![alt text](https://github.com/cduarte3/f2read/blob/main/images/image-3.png?raw=true) <br><br> **Usage:** <br><br> ![alt text](https://github.com/cduarte3/f2read/blob/main/images/image-4.png?raw=true)
 
 <br><br>
 
 ## Contributing / Source Code
-5. **Pull the repo and get files ready.**<br>
+6. **Pull the repo and get files ready.**<br>
     - Once Ollama model is set up, clone or fork the repo and place any of your files inside the src folder or in the root folder (file names will need to be called with a prefix of ./ if placed in the root).
 
 <br><br>
 
 ## NPM CLI Usage
-5. **Installing the NPM package and setting up project environment.**<br>
+6. **Installing the NPM package and setting up project environment.**<br>
     - Once Ollama model is set up, run the following command: ```npm install -g f2read ```.
     - Create a src/ directory within your current project if not already present.
     - Place any usage files or directories within the src folder. 
 
 <br><br>
 
-6. **Good to go.**<br>
-    - Once these steps have been completed and the model is running, you may run the command line interface tool. The commands and usage guide will be listed below.
+## Good to go.
+- Once these steps have been completed and the model is running, you may run the command line interface tool. The commands and usage guide will be listed below.
+- To check if your Ollama model is running, type the command ```ollama ps```. <br><br>**Example of usage:** <br><br>![alt text](https://github.com/cduarte3/f2read/blob/main/images/image-5.png?raw=true)
 
-    - To check if your Ollama model is running, type the command ```ollama ps```. <br><br>**Example of usage:** <br><br>![alt text](https://github.com/cduarte3/f2read/blob/main/images/image-5.png?raw=true)
+### If you encounter a 'Cannot execute scripts' error:
+- Open a Powershell window as administrator (Right-click and 'Run as administrator').
+- Run the command ```Set-ExecutionPolicy RemoteSigned```.
+- When prompted, type Y and press Enter to confirm the change.
+- If it doesn't work, you may require a different process to allow for running scripts on your machine.
 
 <br><br>
 
