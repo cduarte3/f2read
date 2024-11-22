@@ -1,6 +1,6 @@
 {
   "name": "f2read",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A CLI tool for generating code into README.md",
   "main": "dist/index.js",
   "bin": {
